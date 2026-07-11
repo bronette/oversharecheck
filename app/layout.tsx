@@ -8,9 +8,17 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "OverShare Check — Find SharePoint oversharing before Copilot does",
+  metadataBase: new URL("https://oversharecheck.com"),
+  title: {
+    default: "OverShare Check — Find SharePoint oversharing before Copilot does",
+    template: "%s | OverShare Check",
+  },
   description:
     "Scan a SharePoint site for anonymous links, org-wide sharing, and external guests. Read-only, nothing stored. Get a shareable exposure report in minutes.",
+  openGraph: {
+    siteName: "OverShare Check",
+    type: "website",
+  },
 };
 
 async function Header() {
