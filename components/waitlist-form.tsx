@@ -27,7 +27,7 @@ export function WaitlistForm() {
   }
 
   if (state === "done") {
-    return <p className="text-sm font-medium text-emerald-700">{msg}</p>;
+    return <p className="text-sm font-medium text-emerald-400">{msg}</p>;
   }
 
   return (
@@ -38,17 +38,17 @@ export function WaitlistForm() {
         placeholder="you@company.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500"
+        className="flex-1 rounded-lg border border-white/15 bg-white/5 px-4 py-2.5 text-white placeholder:text-slate-500 outline-none focus:border-blue-400"
       />
       <button
         type="submit"
         disabled={state === "sending"}
-        className="rounded-lg bg-blue-600 px-5 py-2.5 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="grad-accent rounded-lg px-5 py-2.5 font-medium text-white hover:brightness-110 disabled:opacity-50"
       >
         {state === "sending" ? "…" : "Join the waitlist"}
       </button>
       {state === "error" && (
-        <p className="text-sm text-red-600 sm:hidden">{msg}</p>
+        <p className="text-sm text-red-400 sm:hidden">{msg}</p>
       )}
     </form>
   );

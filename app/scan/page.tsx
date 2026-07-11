@@ -149,16 +149,14 @@ function ScanUI({
     <main className="mx-auto max-w-4xl px-6 py-10">
       {/* Scan form */}
       <div className="no-print">
-        <h1 className="text-2xl font-bold text-slate-900">
-          Scan a SharePoint site
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-white">Scan a SharePoint site</h1>
+        <p className="mt-1 text-sm text-slate-400">
           Read-only · delegated permissions · nothing is stored — the report
           lives only in your browser.
         </p>
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
           <input
-            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            className="flex-1 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-white placeholder:text-slate-500 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20"
             placeholder="https://contoso.sharepoint.com/sites/finance"
             value={siteUrl}
             onChange={(e) => setSiteUrl(e.target.value)}
@@ -167,26 +165,29 @@ function ScanUI({
           <button
             onClick={runScan}
             disabled={busy || !siteUrl}
-            className="rounded-lg bg-blue-600 px-5 py-2 font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
+            className="grad-accent rounded-lg px-5 py-2 font-medium text-white shadow-lg shadow-blue-500/25 transition hover:brightness-110 disabled:opacity-50"
           >
             {busy ? "Scanning…" : "Scan"}
           </button>
         </div>
         {busy && (
-          <p className="mt-3 animate-pulse text-sm text-slate-500">
+          <p className="mt-3 animate-pulse text-sm text-slate-400">
             Crawling document libraries and checking permissions…
           </p>
         )}
         {error && (
-          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="mt-4 rounded-lg border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-300">
             {error}
           </div>
         )}
       </div>
 
-      {/* Report */}
+      {/* Report — a light "document" on the dark app, prints clean */}
       {result && summary && (
-        <section className="mt-10" id="report">
+        <section
+          className="report-doc mt-10 rounded-2xl bg-white p-6 text-slate-900 shadow-2xl shadow-black/40 sm:p-8"
+          id="report"
+        >
           {/* Report header */}
           <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-6">
             <div>

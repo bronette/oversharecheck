@@ -1,7 +1,41 @@
+import nodemailer from "nodemailer";
 import type { ScanResult, Severity } from "./scan";
 import { summarize, SEVERITY_META, FINDING_META } from "./report";
 
 const SEVERITIES: Severity[] = ["critical", "high", "medium", "low"];
+
+/* ------------------------------------------------------------ SMTP core --- */
+
+/** Build a reusable SMTP transport from env (cPanel/Namecheap mailbox). */
+function getTransport() {
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  if (!host || !user || !pass) {
+    throw new Error("Email is not configured (missing SMTP_HOST/USER/PASS).");
+  }
+  const port = Number(process.env.SMTP_PORT ?? 465);
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465, // 465 = implicit TLS; 587 = STARTTLS
+    auth: { user, pass },
+  });
+}
+
+export const MAIL_FROM =
+  process.env.MAIL_FROM ?? "OverShare Check <reports@oversharecheck.com>";
+
+/** Send a plain message via SMTP. Used by the waitlist route too. */
+export async function sendMail(opts: {
+  to: string;
+  subject: string;
+  html?: string;
+  text?: string;
+}): Promise<void> {
+  const transport = getTransport();
+  await transport.sendMail({ from: MAIL_FROM, ...opts });
+}
 
 /* ---------------------------------------------------------------- Email --- */
 
@@ -47,25 +81,12 @@ function reportHtml(result: ScanResult): string {
 }
 
 export async function sendReportEmail(to: string, result: ScanResult): Promise<void> {
-  const key = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM ?? "OverShare Check <reports@oversharecheck.com>";
-  if (!key) throw new Error("Email is not configured (missing RESEND_API_KEY).");
-
   const s = summarize(result);
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to,
-      subject: `Exposure report: ${result.siteName} — Grade ${s.grade} (${result.findings.length} findings)`,
-      html: reportHtml(result),
-    }),
+  await sendMail({
+    to,
+    subject: `Exposure report: ${result.siteName} — Grade ${s.grade} (${result.findings.length} findings)`,
+    html: reportHtml(result),
   });
-  if (!res.ok) throw new Error(`Email send failed: ${res.status} ${await res.text()}`);
 }
 
 /* ---------------------------------------------------------------- Teams --- */

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { auth, signIn, signOut } from "@/auth";
+import { Logo } from "@/components/logo";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -15,27 +16,21 @@ export const metadata: Metadata = {
   },
   description:
     "Scan a SharePoint site for anonymous links, org-wide sharing, and external guests. Read-only, nothing stored. Get a shareable exposure report in minutes.",
-  openGraph: {
-    siteName: "OverShare Check",
-    type: "website",
-  },
+  openGraph: { siteName: "OverShare Check", type: "website" },
 };
 
 async function Header() {
   const session = await auth();
   return (
-    <header className="no-print border-b border-slate-200 bg-white">
+    <header className="no-print sticky top-0 z-10 border-b border-white/10 bg-[#070b16]/80 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-        <Link href="/" className="flex items-center gap-2 font-bold text-slate-900">
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-600 text-sm text-white">
-            OS
-          </span>
-          OverShare Check
+        <Link href="/">
+          <Logo />
         </Link>
         <nav className="flex items-center gap-4 text-sm">
           {session ? (
             <>
-              <Link href="/scan" className="text-slate-600 hover:text-slate-900">
+              <Link href="/scan" className="text-slate-300 hover:text-white">
                 Scan
               </Link>
               <form
@@ -44,9 +39,7 @@ async function Header() {
                   await signOut({ redirectTo: "/" });
                 }}
               >
-                <button className="text-slate-500 hover:text-slate-900">
-                  Sign out
-                </button>
+                <button className="text-slate-400 hover:text-white">Sign out</button>
               </form>
             </>
           ) : (
@@ -56,7 +49,7 @@ async function Header() {
                 await signIn("microsoft-entra-id", { redirectTo: "/scan" });
               }}
             >
-              <button className="rounded-lg bg-blue-600 px-3 py-1.5 font-medium text-white hover:bg-blue-700">
+              <button className="grad-accent rounded-lg px-3.5 py-1.5 font-medium text-white shadow-lg shadow-blue-500/20 transition hover:brightness-110">
                 Sign in
               </button>
             </form>
@@ -78,9 +71,11 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col">
         <Header />
         <div className="flex-1">{children}</div>
-        <footer className="no-print border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-400">
-          OverShare Check · Read-only SharePoint exposure scanning · we store
-          nothing
+        <footer className="no-print border-t border-white/10 py-8 text-center text-xs text-slate-500">
+          <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 px-6">
+            <Logo className="opacity-70" />
+            <p>Read-only SharePoint exposure scanning · we store nothing.</p>
+          </div>
         </footer>
       </body>
     </html>
