@@ -53,7 +53,9 @@ interface Permission {
  *   https://tenant.sharepoint.com/sites/finance/Shared%20Documents/... (deep link)
  */
 export async function resolveSite(accessToken: string, siteUrl: string) {
-  const u = new URL(siteUrl.trim());
+  // Tolerate URLs pasted from prose/emails: strip trailing punctuation & spaces.
+  const cleaned = siteUrl.trim().replace(/[)\]}>.,;\s]+$/, "");
+  const u = new URL(cleaned);
   const segs = u.pathname.split("/").filter(Boolean);
   let sitePath = "";
   if (segs.length >= 2 && (segs[0] === "sites" || segs[0] === "teams")) {
