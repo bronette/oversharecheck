@@ -19,7 +19,7 @@ _Working codename: `sharepoint-auditor` (brand/domain TBD — see Task #5). Star
 $20k MRR ≈ 25 MSPs × $800 or 60 tenants × $350. Channel: r/sharepoint, r/msp, MSPGeek, SEO.
 
 ## Architecture (MVP)
-- **Next.js 15 (App Router, TS)** — this repo, created with create-next-app.
+- **Next.js 16 (App Router, TS)** — this repo, created with create-next-app.
 - **Auth.js v5** (`next-auth@beta`) with the `microsoft-entra-id` provider, multi-tenant (`/common/v2.0` issuer). Delegated flow — the signed-in admin's own permissions bound what we can read. Access token lives in the encrypted JWT session cookie; **no server-side storage of tokens or scan data in the free MVP** (a selling point: "we store nothing").
 - **Graph access:** plain `fetch` against `graph.microsoft.com/v1.0` (no SDK — keep deps light). Wrapper in `lib/graph.ts` handles 429/503 `Retry-After` backoff and paging.
 - **Scan engine:** `lib/scan.ts`. Stateless per-request in MVP with an item cap (default 2,000 items) to stay inside serverless timeouts. Phase 2 moves scans to a worker (BullMQ + Postgres) for tenant-wide.

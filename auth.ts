@@ -67,11 +67,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return { ...token, error: "RefreshFailed" };
       }
     },
-    async session({ session, token }) {
-      // Expose the Graph access token to server-side route handlers only.
-      const s = session as { accessToken?: string; error?: string };
-      s.accessToken = token.accessToken as string | undefined;
-      s.error = token.error as string | undefined;
+    async session({ session }) {
+      // Do NOT put the Graph access token on the session — the session object is
+      // returned to the browser by /api/auth/session. The token stays in the
+      // encrypted JWT; server routes read it via getGraphToken() (lib/auth-token).
       return session;
     },
   },

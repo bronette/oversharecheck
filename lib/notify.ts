@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import type { ScanResult, Severity } from "./scan";
 import { summarize, SEVERITY_META, FINDING_META } from "./report";
+import { isValidTeamsWebhook } from "./security";
 
 const SEVERITIES: Severity[] = ["critical", "high", "medium", "low"];
 
@@ -155,9 +156,9 @@ function adaptiveCard(result: ScanResult) {
 
 /** POST an Adaptive Card to a Teams Workflows incoming webhook. */
 export async function postReportToTeams(webhookUrl: string, result: ScanResult): Promise<void> {
-  if (!/^https:\/\/.*\.(logic\.azure\.com|powerplatform\.com|azure-apihub\.net|microsoft\.com)/i.test(webhookUrl)) {
-    // Loose guard — Workflows URLs are long HTTPS logic-app endpoints.
-    if (!webhookUrl.startsWith("https://")) throw new Error("Teams webhook URL must be https://");
+  // Defense in depth — the route validates too, but never trust the caller.
+  if (!isValidTeamsWebhook(webhookUrl)) {
+    throw new Error("Refusing to post: URL is not an allowed Teams webhook host.");
   }
   const res = await fetch(webhookUrl, {
     method: "POST",

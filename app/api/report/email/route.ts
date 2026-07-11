@@ -2,26 +2,30 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { sendReportEmail } from "@/lib/notify";
 import type { ScanResult } from "@/lib/scan";
+import { rateLimit, clientKey } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  const email = session?.user?.email;
+  if (!email) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
 
-  const { to, result } = (await req.json()) as { to?: string; result?: ScanResult };
-  if (!to || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) {
-    return NextResponse.json({ error: "Enter a valid email address" }, { status: 400 });
+  if (!rateLimit(clientKey(req, "email"), 10, 60_000)) {
+    return NextResponse.json({ error: "Too many emails — please wait." }, { status: 429 });
   }
+
+  const { result } = (await req.json()) as { result?: ScanResult };
   if (!result?.findings) {
     return NextResponse.json({ error: "Run a scan first" }, { status: 400 });
   }
 
   try {
-    await sendReportEmail(to, result);
-    return NextResponse.json({ ok: true });
+    // Anti-abuse: only ever send to the signed-in user's own address. This
+    // prevents the endpoint from being used to send branded mail to arbitrary
+    // recipients (phishing) from our domain.
+    await sendReportEmail(email, result);
+    return NextResponse.json({ ok: true, sentTo: email });
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Send failed" },
-      { status: 500 },
-    );
+    console.error("[report/email] failed:", e);
+    return NextResponse.json({ error: "Could not send the report email." }, { status: 500 });
   }
 }

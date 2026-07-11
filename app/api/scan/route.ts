@@ -1,38 +1,54 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getGraphToken } from "@/lib/auth-token";
 import { scanSite } from "@/lib/scan";
+import { isValidSharePointUrl } from "@/lib/security";
+import { rateLimit, clientKey } from "@/lib/rate-limit";
 
 export const maxDuration = 300;
 
 export async function POST(req: Request) {
-  const session = await auth();
-  const s = session as { accessToken?: string; error?: string } | null;
-  if (s?.error) {
+  const token = await getGraphToken(req);
+  if (token?.error) {
     return NextResponse.json(
       { error: "Your session expired — sign out and back in.", reauth: true },
       { status: 401 },
     );
   }
-  const accessToken = s?.accessToken;
-  if (!accessToken) {
+  if (!token?.accessToken) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
 
-  const { siteUrl } = await req.json();
-  if (typeof siteUrl !== "string" || !siteUrl.includes(".sharepoint.com")) {
+  // Expensive endpoint: cap scans per client.
+  if (!rateLimit(clientKey(req, "scan"), 10, 60_000)) {
     return NextResponse.json(
-      { error: "Provide a SharePoint site URL, e.g. https://contoso.sharepoint.com/sites/finance" },
+      { error: "Too many scans — please wait a minute." },
+      { status: 429 },
+    );
+  }
+
+  const { siteUrl } = await req.json();
+  if (typeof siteUrl !== "string" || !isValidSharePointUrl(siteUrl)) {
+    return NextResponse.json(
+      { error: "Enter a valid SharePoint URL, e.g. https://contoso.sharepoint.com/sites/finance" },
       { status: 400 },
     );
   }
 
   try {
-    const result = await scanSite(accessToken, siteUrl);
+    const result = await scanSite(token.accessToken, siteUrl);
     return NextResponse.json(result);
   } catch (err) {
+    // Log the real error server-side; return a generic message so Graph
+    // response bodies (tenant IDs, paths) don't leak to the client.
+    console.error("[scan] failed:", err);
+    const denied = err instanceof Error && /\b(401|403)\b/.test(err.message);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Scan failed" },
-      { status: 500 },
+      {
+        error: denied
+          ? "Access denied by SharePoint — you may not have permission to read that site."
+          : "Scan failed. Check the site URL and try again.",
+      },
+      { status: denied ? 403 : 500 },
     );
   }
 }

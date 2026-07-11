@@ -53,7 +53,6 @@ export default function ScanPage() {
 }
 
 function SharePanel({ result }: { result: ScanResult }) {
-  const [email, setEmail] = useState("");
   const [webhook, setWebhook] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [sending, setSending] = useState<"email" | "teams" | null>(null);
@@ -66,14 +65,16 @@ function SharePanel({ result }: { result: ScanResult }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
-          kind === "email"
-            ? { to: email, result }
-            : { webhookUrl: webhook, result },
+          kind === "email" ? { result } : { webhookUrl: webhook, result },
         ),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed");
-      setStatus(kind === "email" ? `Report emailed to ${email}.` : "Posted to Teams.");
+      setStatus(
+        kind === "email"
+          ? `Report emailed to ${data.sentTo ?? "your account"}.`
+          : "Posted to Teams.",
+      );
     } catch (e) {
       setStatus(e instanceof Error ? e.message : "Failed");
     } finally {
@@ -85,22 +86,13 @@ function SharePanel({ result }: { result: ScanResult }) {
     <div className="no-print mt-6 rounded-lg border border-slate-200 bg-white p-4">
       <h3 className="text-sm font-semibold text-slate-900">Share this report</h3>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        <div className="flex gap-2">
-          <input
-            type="email"
-            placeholder="you@company.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-blue-500"
-          />
-          <button
-            onClick={() => send("email")}
-            disabled={!email || sending === "email"}
-            className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {sending === "email" ? "…" : "Email"}
-          </button>
-        </div>
+        <button
+          onClick={() => send("email")}
+          disabled={sending === "email"}
+          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+        >
+          {sending === "email" ? "Sending…" : "Email the report to me"}
+        </button>
         <div className="flex gap-2">
           <input
             type="url"

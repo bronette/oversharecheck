@@ -72,9 +72,8 @@ const EVERYONE_MARKERS = [
   "spo-grid-all-users",
   "everyone",
 ];
-// Default/system principals that are normal site membership, not oversharing.
+// System principals that are normal site plumbing, not oversharing.
 const SYSTEM_MARKERS = ["system account", "sharepoint\\system", "app@sharepoint"];
-const DEFAULT_GROUP_SUFFIXES = [" owners", " members", " visitors"];
 const EXT_MARKERS = ["#ext#", "urn:spo:guest"];
 
 function isEveryone(id: Identity): boolean {
@@ -88,13 +87,6 @@ function isExternal(id: Identity): boolean {
 function isSystem(id: Identity): boolean {
   const s = `${id.displayName ?? ""} ${id.loginName ?? ""}`.toLowerCase();
   return SYSTEM_MARKERS.some((m) => s.includes(m));
-}
-function isDefaultGroup(id: Identity): boolean {
-  const n = (id.displayName ?? "").toLowerCase();
-  return (
-    DEFAULT_GROUP_SUFFIXES.some((suf) => n.endsWith(suf)) ||
-    n.includes("limited access")
-  );
 }
 
 function classify(
